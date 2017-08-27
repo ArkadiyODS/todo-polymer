@@ -1,0 +1,139 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import"  href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+<link href="../../bower_components/iron-icons/iron-icons.html" rel="import">
+<link href="../../bower_components/paper-button/paper-button.html" rel="import">
+<link href="../../bower_components/paper-fab/paper-fab.html" rel="import">
+
+<link rel="import"  href="../task-elem/task-elem.html">
+
+
+<dom-module id="task-list">
+  <template>
+    <style>
+      :host{
+      --paper-fab-background: orange;--paper-fab-keyboard-focus-background: orange;
+      }
+      .Task-container{
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+    .Title{
+      color: orange;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    h3{
+      margin: 20px 10px;
+      color: var(--paper-fab-background);
+    }
+    hr{
+      border-color: var(--paper-fab-background);
+      border-style: solid;
+      display: inline-block;
+      flex: 1;
+    }
+    .hideAdd{
+      display: none;
+    }
+
+    paper-fab{
+      position: relative;
+      top: -15px;
+      left: 10px;
+    }
+    </style>
+    <div class="Title">
+      <hr>
+      <h3>[[category]]</h3>
+      <hr>
+    </div>
+
+    <div class="Task-container">
+      <template is="dom-repeat" items="{{tasks}}" filter="{{setFilter(filter)}}" observe="completed" mutable-data>
+        <task-elem message="{{item.message}}"  creation-date="{{item.date}}"
+        completed="{{item.completed}}"
+        edit-mode="{{item.editMode}}"
+        on-update="handleTaskUpdate" on-delete="handleTaskDelete"
+        on-completed="handleTaskComplete"></task-elem>
+      </template>
+    </div>
+    <paper-fab class$="[[hideClass]]" mini icon="add" on-click="addNewTask" title="add task"></paper-fab>
+  </template>
+  <script>
+    class TaskList extends Polymer.Element{
+
+      static get is() {
+        return 'task-list'
+      }
+
+      static get properties() {
+        return {
+          tasks: Array,
+          hideAdd: {
+            type: Boolean,
+            observer: 'hideAddObserver'
+          },
+          category: String,
+          filter: {
+            type: String,
+            value: ''
+          }
+        }
+      }
+
+      setFilter(){
+        switch(this.filter){
+          case 'active':
+            return (task) => { return !task.completed }
+          case 'completed':
+            return (task) => { return task.completed }
+          default:
+              return null;
+        }
+      }
+
+      fireUpdateEvent(){
+        this.dispatchEvent(new CustomEvent('update'))
+      }
+
+      hideAddObserver(newValue){
+        this.hideClass = newValue ? 'hideAdd' : '';
+      }
+
+      handleTaskUpdate(e){
+        e.model.set('item.message', e.detail.message);
+        e.model.set('item.editMode', false);
+        this.fireUpdateEvent();
+      }
+
+      handleTaskDelete(e){
+        var task = e.model.item;
+        var index = this.tasks.indexOf(task);
+        this.splice('tasks', index, 1);
+        this.fireUpdateEvent();
+      }
+
+      handleTaskComplete(e){
+        e.model.set('item.completed', e.detail.completed);
+        this.fireUpdateEvent();
+      }
+
+      addNewTask(){
+        this.push('tasks', {
+            message: '',
+            creationDate: new Date(),
+            completed: false,
+            editMode: true
+        });
+      }
+
+
+    }
+  window.customElements.define(TaskList.is, TaskList);
+  </script>
+</dom-module>
+

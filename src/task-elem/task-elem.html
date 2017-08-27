@@ -1,0 +1,193 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import"  href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html" >
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+<link href="../../bower_components/iron-icons/iron-icons.html" rel="import">
+<link href="../../bower_components/paper-input/paper-input.html" rel="import">
+
+
+<script src='../../bower_components/moment/min/moment.min.js'></script>
+
+<dom-module id="task-elem">
+  <template>
+    <style>
+      :host{
+        display: flex;
+        margin: 0 2px;
+        align-items: center;
+        height: 80px;
+        background-color: #fff;
+        box-shadow: 1px 1px 3px 1px #90A4AE;
+        --active-color: #0097A7;
+        --static-color: #607D8B;
+       }
+      paper-input{
+        margin-left: 90px;
+        width: 300px;
+      }
+      paper-checkbox{
+        margin: 15px;
+        align-self: center;
+        --paper-checkbox-checked-color: var(--active-color);
+      }
+      iron-icon, paper-icon-button{
+        color: var(--static-color);
+        visibility: hidden;
+      }
+      iron-icon:hover, paper-icon-button:hover{
+        color:var(--active-color);
+      }
+
+      .MainWrapper, .StaticMode {
+        width: 100%;
+      }
+
+      .MainWrapper:hover iron-icon,
+      .MainWrapper:hover paper-icon-button,
+      .EditMode.ShowHide paper-icon-button{
+        visibility: visible;
+      }
+      .Task-wrapper{
+        padding: 10px;
+        max-width: 70%;
+      }
+      .StaticMode{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+      .EditMode{
+        display: none;
+      }
+      .EditMode.ShowHide{
+        display: flex;
+        align-items: center;
+      }
+      .StaticMode.ShowHide{
+        display: none;
+      }
+      .Message{
+        max-height: 30px;
+        white-space: nowrap;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .Crossed{
+        text-decoration: line-through;
+      }
+      .Time{
+        color: #78909C;
+      }
+
+    </style>
+    <div class="MainWrapper">
+        <div class$="EditMode [[edit]]">
+          <div>
+            <paper-input id="messageInput" label="Task" value="[[message]]" auto-validate required error-message="Please enter task!"></paper-input>
+          </div>
+          <div>
+            <paper-icon-button on-click="handleDone" icon="done" title="done"></paper-icon-button><paper-icon-button on-click="handleDiscard" icon="close" title="cancel"></paper-icon-button>
+          </div>
+        </div>
+      <div class$="StaticMode [[edit]]">
+        <iron-icon icon="icons:more-vert"></iron-icon>
+        <paper-checkbox checked="{{completed::change}}"> </paper-checkbox>
+        <div class$="Task-wrapper [[crossed]]">
+          <div class="Message">[[message]]</div>
+          <div class="Time">Created [[showTime]]</div>
+        </div>
+        <paper-icon-button on-click="handleEdit" icon="create" title="edit"></paper-icon-button>
+        <paper-icon-button on-click="handleDelete" icon="delete" title="delete"></paper-icon-button>
+      </div>
+    </div>
+  </template>
+  <script>
+    class TaskElem extends Polymer.Element{
+
+      static get is() {
+        return 'task-elem'
+      }
+
+      static get properties(){
+        return {
+          editMode: Boolean,
+          message: String,
+          creationDate: Date,
+          showTime: {
+            type: Date,
+            value: function(){ return this.updateTime()}
+          },
+          completed: {
+            type: Boolean,
+            observer: 'onCompletion'
+          },
+          crossed: {
+            type: String,
+            computed: 'crossForCompleted(completed)'
+          }
+        }
+      }
+
+      ready(){
+        super.ready();
+        this.edit = this.editMode ? 'ShowHide': '';
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this.timer = setInterval(()=>{
+          this.showTime = this.updateTime();
+        },60000)
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        clearInterval(this.timer);
+      }
+
+      crossForCompleted(completed){
+        return completed ? 'Crossed' : '';
+      }
+
+      updateTime(){
+        return moment(this.creationDate).fromNow();
+      }
+
+      handleEdit(){
+        this.editMode = !this.editMode;
+        this.edit = this.edit == '' ? 'ShowHide': '';
+      }
+
+      handleDelete(){
+        this.dispatchEvent(new CustomEvent('delete'))
+      }
+
+      handleDone(){
+        if(this.$.messageInput.invalid){
+          return;
+        }
+        this.dispatchEvent(new CustomEvent('update',{detail: {message: this.$.messageInput.value}}))
+        this.handleEdit();
+      }
+
+      onCompletion(){
+         this.dispatchEvent(new CustomEvent('completed',{detail: {completed: this.completed}}))
+      }
+
+      handleDiscard(){
+        if(this.message == ''){
+          this.handleDelete();
+          return;
+        }
+        this.$.messageInput.value = this.message;
+        this.handleEdit();
+      }
+
+    }
+  window.customElements.define(TaskElem.is, TaskElem);
+  </script>
+</dom-module>
+
+

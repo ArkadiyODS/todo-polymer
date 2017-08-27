@@ -1,0 +1,6 @@
+{
+  "name": "todo-list-polymer",
+  "short_name": "todo-list-polymer",
+  "start_url": "/",
+  "display": "standalone"
+}

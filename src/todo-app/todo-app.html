@@ -1,0 +1,92 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import"  href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import"  href="../task-list/task-list.html">
+<link rel="import"  href="../task-elem/task-elem.html">
+<link href="../../bower_components/paper-tabs/paper-tabs.html" rel="import"><link href="../../bower_components/paper-tabs/paper-tab.html" rel="import">
+<script src='../storage-service/storage.js'></script>
+
+<dom-module id="todo-app">
+  <template>
+    <style>
+      :host{
+        width: 800px;
+        margin: 0 auto;
+        display: block;
+        overflow: hidden;
+        padding-bottom: 50px;
+        --static-color: #546E7A;
+        --active-color: #0097A7;
+        --paper-tabs-selection-bar-color: var(--active-color);
+        --paper-tab-ink: var(--paper-tabs-selection-bar-color);
+      }
+      h1{
+        text-align: center;
+      }
+
+      hr{
+        border-color: var(--static-color);
+        border-style: solid;
+        border-width: 1px;
+        border-top-style: none;
+        margin-bottom: 0;
+      }
+
+      paper-tabs{
+        margin-left: -58px;
+        border-bottom: 1px solid var(--static-color);
+      }
+      paper-tab.iron-selected {
+        color: var(--active-color);
+      }
+    </style>
+    <h1>TASK MANAGER</h1>
+    <hr>
+    <paper-tabs selected="0" scrollable>
+      <paper-tab on-click="cleanFilter">All Tasks</paper-tab>
+      <paper-tab on-click="activeFilter">Active Tasks</paper-tab>
+      <paper-tab on-click="completedFilter">Completed Tasks</paper-tab>
+    </paper-tabs>
+    <template is="dom-repeat" items="{{categories}}">
+      <task-list tasks="{{item.tasks}}" filter="{{filter}}" category="[[item.title]]" hide-add="{{hideAdd}}" on-update="updateHandler"
+      ></task-list>
+    </template>
+  </template>
+  <script>
+    class TodoApp extends Polymer.Element{
+      constructor(){
+        super();
+
+        this.storage = storage;
+
+        this.categories = this.storage.getTasks();
+
+        this.filter = '';
+      }
+
+      static get is() {
+        return 'todo-app'
+      }
+
+      cleanFilter(){
+        this.filter = '';
+        this.hideAdd = false;
+      }
+
+      activeFilter(){
+        this.filter = 'active';
+        this.hideAdd = false;
+      }
+
+      completedFilter(){
+        this.filter = 'completed';
+        this.hideAdd = true;
+      }
+
+      updateHandler(){
+        this.storage.updateStorage(this.categories)
+      }
+
+    }
+  window.customElements.define(TodoApp.is, TodoApp);
+  </script>
+</dom-module>
